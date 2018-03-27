@@ -13,9 +13,10 @@
       .list-item {
         .item-title {
           height: 60px;
-          background: #efefef;
+          background: #e0e0e0;
           text-align: left;
           h3 {
+            padding-left: 20px;
             line-height: 60px;
             margin: 0;
           }
@@ -27,7 +28,22 @@
             text-align: left;
             span {
               line-height: 50px;
+              padding-left: 20px;
             }
+            &:active {
+              background: #f7f7f7;
+            }
+          }
+          .list-item-checked {
+            background: #f1f1f1;
+          }
+        }
+        .no-item {
+          height: 50px;
+          text-align: center;
+          line-height: 50px;
+          &:active {
+            background: #f7f7f7;
           }
         }
       }
@@ -38,9 +54,8 @@
     height: 100%;
     position: absolute;
     right: 25px;
-    top: 10px;
-    // display: flex;
-    // flex-wrap: wrap;
+    top: 50%;
+    transform: translateY(-50%);
     .side-index-item {
       height: 3.8%;
       width: 100%;
@@ -54,7 +69,7 @@
         align-items: center;
         position: absolute;
         right: 0;
-        border-left: 1px solid #efefef;
+        // border-left: 1px solid #efefef;
       }
       cursor: pointer;
     }
@@ -69,12 +84,10 @@
       background: rgba(0, 0, 0, 0.4);
       color: #fff;
       border-radius: 10px;
+      text-align: center;
       transform: translate(-50%, -50%);
     }
   }
-}
-.no-scroll-bar {
-
 }
 </style>
 
@@ -88,11 +101,12 @@
         class="index-lists-content"
         ref="scrollWapper">
         <div
-          class="list-item"
           v-for="(item, index) in finalDatas"
           :data-character="item.character"
-          :key="index">
+          :key="index"
+          class="list-item">
             <div
+              @click="bindItemClick(item, index)"
               class="item-title">
               <h3>{{item.character}}</h3>
             </div>
@@ -100,9 +114,11 @@
               v-if="item.items.length !== 0"
               class="sub-lists-wapper">
               <div
-                class="sub-list-item"
                 v-for="(subItem, subIndex) in item.items"
-                :key="subIndex">
+                :key="subIndex"
+                @click="bindSubItemClick(subItem, subIndex)"
+                class="sub-list-item"
+                :class="{'list-item-checked': subItem.selected}">
                 <span>{{subItem.name}}</span>
               </div>
             </div>
@@ -111,6 +127,11 @@
               v-if="!item.items.length">
               没有内容
             </div>
+          </div>
+          <div
+            class="no-contents"
+            v-if="!finalDatas.length">
+            没有内容
           </div>
       </div>
     </div>
@@ -127,13 +148,13 @@
         {{character}}
       </div>
       <div
-        v-for="(item, index) in finalDatas"
+        v-for="(item, index) in finalCharacters"
         :key="index"
         class="side-index-item">
         <div
           class="side-item-name"
           :style="{'right': isMouseDown ? '25px' : ''}">
-          <span>{{item.character}}</span>
+          <span>{{item}}</span>
         </div>
       </div>
     </div>
@@ -160,27 +181,48 @@ export default {
     throttleTime: {
       type: Number,
       default: 250
+    },
+    showEmpty: {
+      type: Boolean,
+      default: true
+    },
+    isAllCharacters: {
+      type: Boolean,
+      default: true
     }
   },
   computed: {
     finalDatas () {
-      let finalDatas = []
-      this.characters.forEach((character) => {
-        let hasCharacter = false
-        this.indexDatas.some((data) => {
-          if (data.character === character) {
-            hasCharacter = true
-            finalDatas.push(data)
+      if (this.showEmpty) {
+        let finalDatas = []
+        this.characters.forEach((character) => {
+          let hasCharacter = false
+          this.indexDatas.some((data) => {
+            if (data.character === character) {
+              hasCharacter = true
+              finalDatas.push(data)
+            }
+          })
+          if (!hasCharacter) {
+            finalDatas.push({
+              character,
+              items: []
+            })
           }
         })
-        if (!hasCharacter) {
-          finalDatas.push({
-            character,
-            items: []
-          })
-        }
+        return finalDatas
+      }
+      return this.indexDatas
+    },
+    finalCharacters () {
+      if (this.isAllCharacters || this.indexDatas.length === 26 || this.showEmpty) {
+        return this.characters
+      }
+      const arr = []
+      this.indexDatas.forEach((item) => {
+        arr.push(item.character)
       })
-      return finalDatas
+      return arr
     }
   },
   methods: {
@@ -226,31 +268,31 @@ export default {
     bindSideItemMouseUpEvent (e) {
       this.isMouseDown = false
       this.modalFlag = false
+    },
+    bindSubItemClick (subItem, subIndex) {
+      this.$emit('sub-item-click', subItem, subIndex)
+    },
+    bindItemClick (item, index) {
+      this.$emit('item-click', item, index)
     }
   },
   watch: {
     character (newVal, oldVal) {
-      console.log(newVal)
       const scrollTarget = this.$refs.scrollTarget
       const scrollWapper = this.$refs.scrollWapper
       const scrollItems = Array.from(scrollWapper.childNodes)
       let offsetTop
       scrollItems.some((item) => {
-        if (item.dataset.character === newVal) {
+        if (item.className === 'list-item' && item.dataset.character === newVal) {
           offsetTop = item.offsetTop
           return true
         }
       })
-      scrollTarget.scrollTop = offsetTop
-      // console.log(scrollItems)
+      scrollTarget.scrollTop = offsetTop === undefined ? scrollTarget.scrollTop : offsetTop
     }
   },
   created () {
     const self = this
-    // this.characters = []
-    // this.indexDatas.forEach((item) => {
-    //   this.characters.push(item.character)
-    // })
     document.addEventListener('mouseup', () => {
       console.log('hehe')
       self.isMouseDown = false
