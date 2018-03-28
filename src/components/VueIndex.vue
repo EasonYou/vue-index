@@ -53,7 +53,7 @@
     width: 20px;
     height: 100%;
     position: absolute;
-    right: 25px;
+    right: 10%;
     top: 50%;
     transform: translateY(-50%);
     .side-index-item {
@@ -93,7 +93,7 @@
 
 <template>
   <div
-    class="vue-index">
+    class="vue-index" ref="main">
     <div
       class="index-lists-wapper"
       ref="scrollTarget">
@@ -150,10 +150,11 @@
       <div
         v-for="(item, index) in finalCharacters"
         :key="index"
-        class="side-index-item">
+        class="side-index-item"
+        :style="{height: middlePositionHeight}">
         <div
           class="side-item-name"
-          :style="{'right': isMouseDown ? '25px' : ''}">
+          :style="{'right': isMouseDown ? '10%' : ''}">
           <span>{{item}}</span>
         </div>
       </div>
@@ -170,7 +171,8 @@ export default {
       isMouseDown: false,
       modalFlag: false,
       character: '',
-      characters: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
+      characters: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'],
+      middlePositionHeight: ''
     }
   },
   props: {
@@ -189,6 +191,10 @@ export default {
     isAllCharacters: {
       type: Boolean,
       default: true
+    },
+    crossPosition: {
+      type: String,
+      default: 'top'
     }
   },
   computed: {
@@ -240,7 +246,7 @@ export default {
         return false
       }
       let index = Array.from(this.$refs.sideIndexWapper.childNodes).indexOf(target) - 2
-      return this.characters[index]
+      return this.finalCharacters[index]
     },
     switchCharacter (e) {
       if (this.isMouseDown) {
@@ -270,10 +276,32 @@ export default {
       this.modalFlag = false
     },
     bindSubItemClick (subItem, subIndex) {
-      this.$emit('sub-item-click', subItem, subIndex)
+      this.$emit('sub-item-click', subItem, subIndex, this.preSelected)
+      this.preSelected = subItem
     },
     bindItemClick (item, index) {
       this.$emit('item-click', item, index)
+    },
+    crossMiddleBinding () {
+      if (this.crossPosition === 'middle') {
+        const main = this.$refs.main
+        const height = getComputedStyle(main, null)['height']
+        const len = this.finalCharacters.length
+        let middleHeight = len * 38 / 1000 * parseInt(height)
+        this.$refs.sideIndexWapper.style.height = `${middleHeight}px`
+        this.middlePositionHeight = `${100 / len}%`
+      }
+    },
+    findPreItem (flag) {
+      const self = this
+      this.indexDatas.forEach((data) => {
+        data.items.some((item) => {
+          if (item.selected === true) {
+            self.preSelected = item
+            return true
+          }
+        })
+      })
     }
   },
   watch: {
@@ -293,11 +321,20 @@ export default {
   },
   created () {
     const self = this
+    this.findPreItem()
     document.addEventListener('mouseup', () => {
-      console.log('hehe')
       self.isMouseDown = false
       self.modalFlag = false
     })
+  },
+  mounted () {
+    this.crossMiddleBinding()
+  },
+  beforeUpdate () {
+    this.findPreItem()
+  },
+  updated () {
+    this.crossMiddleBinding()
   },
   beforeDestroy () {
     document.removeEventListener('mouseup', () => {})

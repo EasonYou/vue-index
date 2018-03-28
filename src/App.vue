@@ -2,9 +2,11 @@
   <div id="app">
     <div class="vue-index-wapper">
       <VueIndex
+        :throttle-time="250"
         :index-datas="indexDatas"
         :is-all-characters="false"
-        :show-empty="false"
+        :show-empty="true"
+        :cross-position="'middle'"
         @sub-item-click="clickSubItem"/>
     </div>
   </div>
@@ -19,20 +21,35 @@ export default {
       indexDatas: [{
         character: 'A',
         items: [{
-          name: 'fuck rm -rf',
+          name: 'fuck rm -rfA',
           selected: true
         }]
       }, {
         character: 'C',
         items: [{
-          name: 'fuck rm -rf'
+          name: 'fuck rm -rfC',
+          selected: false
+        }]
+      }, {
+        character: 'D',
+        items: [{
+          name: 'fuck rm -rf D',
+          selected: false
+        }]
+      }, {
+        character: 'E',
+        items: [{
+          name: 'fuck rm -rfE',
+          selected: false
         }]
       }]
     }
   },
   methods: {
-    clickSubItem (subItem, subIndex) {
-      console.log(subItem, subIndex)
+    clickSubItem (subItem, subIndex, pre) {
+      console.log(subItem, pre)
+      pre.selected = false
+      subItem.selected = true
     },
     clickItem (item, index) {
       console.log(item, index)
