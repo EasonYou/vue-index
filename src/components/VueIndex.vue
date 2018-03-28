@@ -43,7 +43,7 @@
           text-align: center;
           line-height: 50px;
           &:active {
-            background: #f7f7f7;
+            background: #ffe4e4;
           }
         }
       }
